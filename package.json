@@ -1,0 +1,24 @@
+{
+  "name": "r-place-proto",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run build -w @rplace/shared && npm run typecheck -w @rplace/shared && npm run typecheck -w @rplace/server && npm run typecheck -w @rplace/web",
+    "test": "npm run build -w @rplace/shared && npm run test -w @rplace/shared && npm run test -w @rplace/server && npm run test -w @rplace/web",
+    "build": "npm run build -w @rplace/shared && npm run build -w @rplace/server && npm run build -w @rplace/web",
+    "dev": "npm run build -w @rplace/shared && concurrently -n shared,server,web -c blue,green,magenta \"npm run dev -w @rplace/shared\" \"npm run dev -w @rplace/server\" \"npm run dev -w @rplace/web\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.16.0",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.16.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^2.1.8"
+  }
+}

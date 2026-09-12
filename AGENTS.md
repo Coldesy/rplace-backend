@@ -27,3 +27,26 @@ Build this project as a working local prototype before adding production integra
 - Run type-checking, linting, and tests after every major change.
 - Use database migrations rather than modifying the schema manually.
 - Make admin actions auditable.
+
+## Development workflow
+
+Before implementing a major feature:
+
+1. Inspect the existing repository.
+2. State the files that will be created or changed.
+3. List assumptions and unresolved decisions.
+4. Implement the smallest working slice.
+5. Add or update tests.
+6. Run the relevant checks.
+7. Report failures honestly.
+
+## Required checks
+
+At minimum, the project should eventually provide:
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm test`
+- `npm run build`
+
+Use the actual package manager and commands selected for the repository.
