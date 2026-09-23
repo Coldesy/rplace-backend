@@ -15,8 +15,17 @@ export default async function wsRoutes(app: FastifyInstance) {
 
         socket.send(JSON.stringify({ type: 'INIT_BOARD', message: 'Board binary will be served here' }));
 
-        socket.on('message', (message: Buffer) => {
-            handleMessage(socket, message, userId);
+        socket.on('message', async (message: Buffer) => {
+            console.log(`Received message from user ${userId}:`, message);
+            try {
+                await handleMessage(socket, message, userId);
+            } catch (error) {
+                app.log.error(error, `Unhandled WebSocket message error for ${userId}`);
+            }
+        });
+
+        socket.on('error', (error) => {
+            app.log.error(error, `WebSocket error for ${userId}`);
         });
 
         socket.on('close', () => {

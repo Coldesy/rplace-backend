@@ -1,7 +1,12 @@
 local current_usage = redis.call('GET', KEYS[1])
 
 if current_usage and tonumber(current_usage) >= tonumber(ARGV[1]) then
-    return {"err", "RATE_LIMITED", redis.call('TTL', KEYS[1])}
+    local ttl = redis.call('TTL', KEYS[1])
+    if ttl < 0 then
+        redis.call('EXPIRE', KEYS[1], ARGV[2])
+        ttl = tonumber(ARGV[2])
+    end
+    return {"rate_limited", ttl}
 end
 
 local is_duplicate = redis.call('SET', 'placement:' .. ARGV[6], '1', 'NX', 'EX', 86400)

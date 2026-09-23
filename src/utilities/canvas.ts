@@ -10,7 +10,7 @@ class Canvas{
     async init(){
         const scriptPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'placement.lua')
         const script = fs.readFileSync(scriptPath, 'utf-8')
-        this.ps = await redis.script('LOAD', script)
+        this.ps = await redis.script('LOAD', script) as string
         console.log(`Loaded placement script with SHA: ${this.ps}`)
     }
     async placePixel(
@@ -22,8 +22,9 @@ class Canvas{
         maxPixels: number,
         cooldown: number
     ){
+        
         if(!this.ps) throw new Error('Placement script not loaded')
-        const offset = (y * this.canvas_width) + x
+        const offset = ((y * this.canvas_width) + x) * 4
         try{
             const result = await redis.evalsha(
                 this.ps,
@@ -39,9 +40,14 @@ class Canvas{
                  userId,
                  placementId
             ) as any[]
-
-            if(result[0]==='err'){
-                return { success: false, error: result[1] ,ttl:result[2]}
+            //console.log(`Placement result for user ${userId}:`, result)
+            if (result[0] === 'ok' && result[1] === 'DUPLICATE_IGNORED') {
+                console.log(`Duplicate placement ignored for user ${userId} at (${x}, ${y}) with color ${colorId}.`)
+                return { success: false, error: result[1] }
+            }
+            if (result[0] === 'rate_limited') {
+                console.error(`Error placing pixel fouwur user ${userId}:`, result[1])
+                return { success: false, error: 'RATE_LIMITED', ttl: result[1] }
             }
             return { success: true, remaining: result[3], seq: result[5] }
 
