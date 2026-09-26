@@ -2,6 +2,8 @@ import type { WebSocket } from 'ws';
 import { randomUUID } from 'node:crypto';
 import { broadcast } from '../utilities/broadcast.js';
 import { canvas } from '../utilities/canvas.js';
+import { getUserTier } from '../db/mockUsers.js';
+import { getRateLimit } from '../utilities/rateLimit.js';
 
 const BINARY_PLACEMENT_BYTES = 9;
 
@@ -40,8 +42,10 @@ export const handleMessage = async (socket: WebSocket, message: Buffer, userId: 
                 return;
             }
 
-            const maxPixels = 1;
-            const cooldown = 6;
+       
+            
+            const { maxPixels, cooldown } = getRateLimit(userId)
+            //console.log(`User ${userId} has rate limit: ${maxPixels} pixels, ${cooldown} second cooldown`);
             const placementId = data.placementId || randomUUID();
             
             const result = await canvas.placePixel(
@@ -66,6 +70,10 @@ export const handleMessage = async (socket: WebSocket, message: Buffer, userId: 
             }
 
             broadcast(encodePixelUpdate(data.x, data.y, data.color, result.seq));
+            socket.send(JSON.stringify({
+                type: 'PLACED',
+                remaining: result.remaining
+            }));
         }
     } catch (err) {
         const error = err instanceof Error ? err.message : 'Unknown placement error';

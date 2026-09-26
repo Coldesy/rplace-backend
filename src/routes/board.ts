@@ -9,7 +9,7 @@ export default async function boardRoutes(app: FastifyInstance) {
 	app.get('/', async (_request, reply) => {
 		try {
 			let boardBuffer = await redis.getBuffer(CANVAS_KEY);
-			console.log(boardBuffer)
+			//console.log(boardBuffer)
 			if (!boardBuffer) {
 				await redis.set(CANVAS_KEY, emptyBoard, 'NX');
 				boardBuffer = await redis.getBuffer(CANVAS_KEY);
