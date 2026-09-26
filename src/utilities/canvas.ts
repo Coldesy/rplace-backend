@@ -26,6 +26,7 @@ class Canvas{
         if(!this.ps) throw new Error('Placement script not loaded')
         const offset = ((y * this.canvas_width) + x) * 4
         try{
+            console.log(`Placing pixel for user ${userId} Max pixels: ${maxPixels}, Cooldown: ${cooldown}`)
             const result = await redis.evalsha(
                 this.ps,
                 4,
@@ -49,6 +50,7 @@ class Canvas{
                 console.error(`Error placing pixel fouwur user ${userId}:`, result[1])
                 return { success: false, error: 'RATE_LIMITED', ttl: result[1] }
             }
+            console.log(result)
             return { success: true, remaining: result[3], seq: result[5] }
 
         }catch(err){

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "user-default",
+    "username": "Default User",
+    "tier": "default"
+  },
+  {
+    "id": "user-premium",
+    "username": "Premium User",
+    "tier": "premium"
+  },
+  {
+    "id": "user-moderator",
+    "username": "Moderator User",
+    "tier": "moderator"
+  },
+  {
+    "id": "user-unknown-tier",
+    "username": "Fallback User",
+    "tier": "unknown"
+  }
+]

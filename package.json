@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "worker": "tsx src/worker/placementConsumer.ts",
     "build": "tsc && cp src/utilities/placement.lua dist/utilities/placement.lua",
     "start": "node dist/server.js"
   },
