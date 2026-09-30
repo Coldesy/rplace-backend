@@ -4,6 +4,7 @@ import { broadcast } from '../utilities/broadcast.js';
 import { canvas } from '../utilities/canvas.js';
 import { getUserTier } from '../db/mockUsers.js';
 import { getRateLimit } from '../utilities/rateLimit.js';
+import { isPlacementAllowedForUser } from '../auth/isPlacementAllowedForUser.js';
 
 const BINARY_PLACEMENT_BYTES = 9;
 
@@ -16,7 +17,7 @@ const encodePixelUpdate = (x: number, y: number, color: number, seq: number) => 
     return payload;
 };
 
-export const handleMessage = async (socket: WebSocket, message: Buffer, userId: string) => {
+export const handleMessage = async (socket: WebSocket, message: Buffer, userId: string | null) => {
     try {
         let data: { type: string; x: number; y: number; color: number; placementId?: string };
        
@@ -33,6 +34,14 @@ export const handleMessage = async (socket: WebSocket, message: Buffer, userId: 
         }
 
         if (data.type === 'PLACE_PIXEL') {
+            // Rejected before any coordinate validation, rate-limit lookup,
+            // cooldown/idempotency/sequence mutation, logging, or broadcast.
+            // In mock mode userId is never null, so this is a no-op there.
+            if (!isPlacementAllowedForUser(userId)) {
+                socket.send(JSON.stringify({ type: 'ERROR', error: 'UNAUTHENTICATED' }));
+                return;
+            }
+
             if (
                 !Number.isInteger(data.x) || data.x < 0 || data.x >= 1000 ||
                 !Number.isInteger(data.y) || data.y < 0 || data.y >= 600 ||

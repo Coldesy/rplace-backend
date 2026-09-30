@@ -1,8 +1,8 @@
 import { getPool } from './postgres.js';
 
-// Deliberately minimal for Stage 1: just enough to exercise and verify the
-// `users` table schema. Real GitHub-driven upsert logic (upsertUserFromGithub)
-// is explicitly out of scope until Stage 2.
+// Stage 1 kept this deliberately minimal (createUser/getUserById/
+// getUserByGithubId only). Stage 2 adds the one function that was
+// explicitly deferred: upsertUserFromGithub.
 
 export interface UserRow {
     id: string;
@@ -54,4 +54,32 @@ export async function getUserByGithubId(githubId: number | string): Promise<User
     );
 
     return rows[0] ?? null;
+}
+
+export interface UpsertGithubUserInput {
+    githubId: number;
+    /** Mutable metadata — updated on every login, never used to identify the user. */
+    githubLogin: string;
+    avatarUrl: string | null;
+}
+
+/**
+ * Upserts a user keyed on the immutable github_id. github_login and
+ * avatar_url are treated as mutable metadata and always overwritten with
+ * the latest values from GitHub. last_login_at is set to now() on every
+ * successful login, insert or update alike.
+ */
+export async function upsertUserFromGithub(input: UpsertGithubUserInput): Promise<UserRow> {
+    const { rows } = await getPool().query<UserRow>(
+        `INSERT INTO users (github_id, github_login, avatar_url, last_login_at)
+         VALUES ($1, $2, $3, now())
+         ON CONFLICT (github_id) DO UPDATE
+           SET github_login = EXCLUDED.github_login,
+               avatar_url = EXCLUDED.avatar_url,
+               last_login_at = now()
+         RETURNING id, github_id, github_login, avatar_url, created_at, last_login_at`,
+        [input.githubId, input.githubLogin, input.avatarUrl]
+    );
+
+    return rows[0];
 }
