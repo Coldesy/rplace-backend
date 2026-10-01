@@ -86,7 +86,7 @@ export default async function authRoutes(app: FastifyInstance) {
                 const sessionToken = await createSession(user.id, config.sessionTtlSeconds);
                 setSessionCookie(reply, sessionToken, config.sessionTtlSeconds, config.cookieSecure);
 
-                return reply.redirect(config.frontendUrl);
+                return reply.redirect(new URL(config.frontendUrl).toString());
             } catch (error) {
                 if (error instanceof GithubAuthError) {
                     app.log.error(`GitHub OAuth failed: ${error.message}`);

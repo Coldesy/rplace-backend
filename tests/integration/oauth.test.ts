@@ -129,7 +129,7 @@ describe.skipIf(!bothReachable)('GitHub OAuth flow (integration)', () => {
         process.env.COOKIE_SECURE = 'false';
 
         const authRoutesModule = await import('../../src/routes/auth.js');
-        app = Fastify({ loggerInstance: capturingLogger as never });
+        app = Fastify({ loggerInstance: capturingLogger as never, disableRequestLogging: true });
         await app.register(cookie);
         await app.register(authRoutesModule.default, { prefix: '/auth' });
         await app.ready();
@@ -201,7 +201,7 @@ describe.skipIf(!bothReachable)('GitHub OAuth flow (integration)', () => {
         });
 
         expect(callbackResponse.statusCode).toBe(302);
-        expect(callbackResponse.headers.location).toBe('http://localhost:5173');
+        expect(callbackResponse.headers.location).toBe('http://localhost:5173/');
 
         const sessionCookie = callbackResponse.cookies.find(c => c.name === 'session');
         expect(sessionCookie).toBeDefined();
@@ -279,7 +279,7 @@ describe.skipIf(!bothReachable)('GitHub OAuth flow (integration)', () => {
             url: `/auth/github/callback?code=fake-code&state=${state}`,
             cookies: { oauth_state: stateCookieValue }
         });
-        expect(firstAttempt.headers.location).toBe('http://localhost:5173');
+        expect(firstAttempt.headers.location).toBe('http://localhost:5173/');
 
         const replayedAttempt = await app.inject({
             method: 'GET',
@@ -424,16 +424,11 @@ describe.skipIf(!bothReachable)('GitHub OAuth flow (integration)', () => {
         const githubId = 900005000 + Math.floor(Math.random() * 100000);
         createdGithubIds.push(githubId);
 
-        const logCalls: unknown[][] = [];
-        const spyApp = app as unknown as { log: Record<string, (...args: unknown[]) => void> };
-        const originalLoggers = { ...spyApp.log };
-        for (const level of ['info', 'warn', 'error', 'debug'] as const) {
-            const original = spyApp.log[level];
-            spyApp.log[level] = (...args: unknown[]) => {
-                logCalls.push(args);
-                return original?.apply(spyApp.log, args as never);
-            };
-        }
+        // Isolate this test's flow from anything logged earlier in the suite.
+        // No wrapping/restoring needed — capturingLogger already captures
+        // every call made through app.log (and any child logger, since
+        // child() returns the same instance) directly into this array.
+        logCalls.length = 0;
 
         const { state, stateCookieValue } = await startOAuthAttempt();
         mockGithubSuccess(githubId, 'secret-check', 'https://example.com/a.png');
@@ -443,10 +438,6 @@ describe.skipIf(!bothReachable)('GitHub OAuth flow (integration)', () => {
             cookies: { oauth_state: stateCookieValue }
         });
         const sessionValue = callback.cookies.find(c => c.name === 'session')!.value;
-
-        for (const level of ['info', 'warn', 'error', 'debug'] as const) {
-            spyApp.log[level] = originalLoggers[level];
-        }
 
         const serialized = JSON.stringify(logCalls);
         expect(serialized).not.toContain('test-client-secret-never-logged');

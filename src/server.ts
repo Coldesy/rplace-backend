@@ -12,7 +12,15 @@ import { canvas } from "./utilities/canvas.js";
 import { getAuthMode, requireGithubAuthConfig } from "./config.js";
 import cors from "@fastify/cors";
 
-const app = Fastify({ logger: true });
+const app = Fastify({
+    logger: true,
+    // Prevents Fastify's automatic per-request/response log lines, which
+    // serialize the full request URL (including OAuth `code`/`state` query
+    // params) and response headers (including Set-Cookie), from exposing
+    // secrets. Our own explicit, sanitized app.log calls in src/routes/auth.ts
+    // are unaffected by this flag and still log normally.
+    disableRequestLogging: true
+});
 const port = process.env.PORT || 3001
 const host = process.env.HOST ?? "0.0.0.0";
 
