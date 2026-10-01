@@ -7,19 +7,30 @@
     "dev": "tsx watch src/server.ts",
     "worker": "tsx src/worker/placementConsumer.ts",
     "build": "tsc && cp src/utilities/placement.lua dist/utilities/placement.lua",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "migrate:up": "node-pg-migrate up",
+    "migrate:down": "node-pg-migrate down",
+    "migrate:create": "node-pg-migrate create"
   },
   "dependencies": {
     "@fastify/cors": "^11.3.0",
     "@fastify/static": "^10.1.4",
     "@fastify/websocket": "latest",
     "fastify": "latest",
-    "ioredis": "^6.0.0"
+    "ioredis": "^6.0.0",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@types/node": "latest",
+    "@types/pg": "^8.23.1",
     "@types/ws": "^8.18.1",
+    "dotenv": "^18.0.4",
+    "node-pg-migrate": "^9.0.0",
     "tsx": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "vitest": "^5.0.2"
   }
 }
