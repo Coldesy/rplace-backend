@@ -16,10 +16,15 @@ const encodePixelUpdate = (x: number, y: number, color: number, seq: number) => 
     return payload;
 };
 
-export const handleMessage = async (socket: WebSocket, message: Buffer, userId: string) => {
+export const handleMessage = async (
+    socket: WebSocket,
+    message: Buffer,
+    userId: string,
+    getPRPoints: () => Promise<number>
+) => {
     try {
         let data: { type: string; x: number; y: number; color: number; placementId?: string };
-       
+        ;
         if (message.length === BINARY_PLACEMENT_BYTES) {
             data = {
                 type: 'PLACE_PIXEL',
@@ -42,9 +47,10 @@ export const handleMessage = async (socket: WebSocket, message: Buffer, userId: 
                 return;
             }
 
-       
             
-            const { maxPixels, cooldown } = getRateLimit(userId)
+            
+            const prPoints = await getPRPoints(userId);
+            const { maxPixels, cooldown } = getRateLimit(prPoints);
             //console.log(`User ${userId} has rate limit: ${maxPixels} pixels, ${cooldown} second cooldown`);
             const placementId = data.placementId || randomUUID();
             

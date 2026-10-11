@@ -1,12 +1,16 @@
+import "dotenv/config";
 import Fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 import websocket from "@fastify/websocket";
+import cookie from "@fastify/cookie";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { redis } from "./db/redis.js";
+import { checkPostgresConnection } from "./db/postgres.js";
 import wsRoutes from "./routes/ws.js";
 import boardRoutes from "./routes/board.js";
 import { canvas } from "./utilities/canvas.js";
+import { startPixelPlacementPersistence } from "./utilities/pixelPlacementPersistence.js";
 import cors from "@fastify/cors";
 
 const app = Fastify({ logger: true });
@@ -14,16 +18,20 @@ const port = process.env.PORT || 3001
 const host = process.env.HOST ?? "0.0.0.0";
 
 await app.register(cors, {
-    origin: '*', 
+    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    credentials: true,
     exposedHeaders: ['X-Canvas-Sequence']
 });
 
 await app.register(websocket);
+await app.register(cookie);
 await app.register(wsRoutes, { prefix: '/ws' });
 await app.register(boardRoutes, { prefix: '/api/board' });
 
 try {
     await canvas.init();
+    await checkPostgresConnection();
+    void startPixelPlacementPersistence();
     redis.once("ready", async () => {
         console.log("Redis is ready, starting server...");
     });
