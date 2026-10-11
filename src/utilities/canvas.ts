@@ -41,7 +41,6 @@ class Canvas{
                  userId,
                  placementId
             ) as any[]
-            //console.log(`Placement result for user ${userId}:`, result)
             if (result[0] === 'ok' && result[1] === 'DUPLICATE_IGNORED') {
                 console.log(`Duplicate placement ignored for user ${userId} at (${x}, ${y}) with color ${colorId}.`)
                 return { success: false, error: result[1] }
@@ -50,7 +49,7 @@ class Canvas{
                 console.error(`Error placing pixel fouwur user ${userId}:`, result[1])
                 return { success: false, error: 'RATE_LIMITED', ttl: result[1] }
             }
-            console.log(result)
+
             return { success: true, remaining: result[3], seq: result[5] }
 
         }catch(err){
