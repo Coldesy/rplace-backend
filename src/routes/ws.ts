@@ -23,15 +23,19 @@ export default async function wsRoutes(app: FastifyInstance) {
         let userId = 'anonymous';
 
         const token = req.cookies?.jwt;
+        if(!token){
+            return socket.close(1008, 'Missing JWT token');
+        }
 
         if (token) {
             try {
-                //console.log( process.env.JWT_SECRET);
-                const payload = jwt.verify(token, process.env.JWT_SECRET as string) as jwt.JwtPayload;
+                
+                const payload = jwt.verify(token, 'monster' as string) as jwt.JwtPayload;
                 //console.log('WebSocket connection authenticated for user:', payload.id);
                 if (typeof payload.id === 'string') userId = payload.id;
             } catch {
-                app.log.warn('Invalid JWT cookie for WebSocket connection');
+                return socket.close(1008, 'Invalid JWT token');
+                
             }
         }
         let prPoints = 0;

@@ -30,7 +30,7 @@ export const startPixelPlacementPersistence = async () => {
             }
         }
 
-        console.log(`[Worker] ${consumerName} listening to ${streamName}...`);
+        //console.log(`[Worker] ${consumerName} listening to ${streamName}...`);
 
         while (true) {
             if (batch.length === 0) {
