@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { FastifyInstance, FastifyRequest } from 'fastify';
 import jwt from 'jsonwebtoken';
 import { activeClients } from '../utilities/broadcast.js';
@@ -30,7 +31,7 @@ export default async function wsRoutes(app: FastifyInstance) {
         if (token) {
             try {
                 
-                const payload = jwt.verify(token, 'monster' as string) as jwt.JwtPayload;
+                const payload = jwt.verify(token, process.env.JWT as string) as jwt.JwtPayload;
                 //console.log('WebSocket connection authenticated for user:', payload.id);
                 if (typeof payload.id === 'string') userId = payload.id;
             } catch {

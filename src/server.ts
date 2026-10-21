@@ -10,6 +10,7 @@ import { checkPostgresConnection } from "./db/postgres.js";
 import wsRoutes from "./routes/ws.js";
 import boardRoutes from "./routes/board.js";
 import leaderboardRoutes from "./routes/leaderboard.js";
+import pixelHistoryRoutes from "./routes/pixelHistory.js";
 import { canvas } from "./utilities/canvas.js";
 import { startPixelPlacementPersistence } from "./utilities/pixelPlacementPersistence.js";
 import cors from "@fastify/cors";
@@ -29,6 +30,7 @@ await app.register(cookie);
 await app.register(wsRoutes, { prefix: '/ws' });
 await app.register(boardRoutes, { prefix: '/api/board' });
 await app.register(leaderboardRoutes, { prefix: '/api/leaderboard' });
+await app.register(pixelHistoryRoutes, { prefix: '/api/pixels' });
 
 try {
     await canvas.init();

@@ -2,8 +2,8 @@ import type { WebSocket } from 'ws';
 import { randomUUID } from 'node:crypto';
 import { broadcast } from '../utilities/broadcast.js';
 import { canvas } from '../utilities/canvas.js';
-import { getUserTier } from '../db/mockUsers.js';
 import { getRateLimit } from '../utilities/rateLimit.js';
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../config/canvas.js';
 
 const BINARY_PLACEMENT_BYTES = 9;
 
@@ -39,8 +39,8 @@ export const handleMessage = async (
 
         if (data.type === 'PLACE_PIXEL') {
             if (
-                !Number.isInteger(data.x) || data.x < 0 || data.x >= 1000 ||
-                !Number.isInteger(data.y) || data.y < 0 || data.y >= 600 ||
+                !Number.isInteger(data.x) || data.x < 0 || data.x >= CANVAS_WIDTH ||
+                !Number.isInteger(data.y) || data.y < 0 || data.y >= CANVAS_HEIGHT ||
                 !Number.isInteger(data.color) || data.color < 0 || data.color > 15
             ) {
                 socket.send(JSON.stringify({ type: 'ERROR', error: 'INVALID_PIXEL' }));

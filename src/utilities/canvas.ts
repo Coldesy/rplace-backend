@@ -2,11 +2,10 @@ import fs  from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { redis } from '../db/redis.js'
+import { CANVAS_WIDTH } from '../config/canvas.js'
 
 class Canvas{
     private ps: string | null = null;
-    private canvas_width = 1000;
-
     async init(){
         const scriptPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'placement.lua')
         const script = fs.readFileSync(scriptPath, 'utf-8')
@@ -24,9 +23,9 @@ class Canvas{
     ){
         
         if(!this.ps) throw new Error('Placement script not loaded')
-        const offset = ((y * this.canvas_width) + x) * 4
+        const offset = ((y * CANVAS_WIDTH) + x) * 4
         try{
-            console.log(`Placing pixel for user ${userId} Max pixels: ${maxPixels}, Cooldown: ${cooldown}`)
+            //console.log(`Placing pixel for user ${userId} Max pixels: ${maxPixels}, Cooldown: ${cooldown}`)
             const result = await redis.evalsha(
                 this.ps,
                 4,
