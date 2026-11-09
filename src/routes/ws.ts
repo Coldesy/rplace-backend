@@ -5,12 +5,13 @@ import { activeClients } from '../utilities/broadcast.js';
 import { handleMessage } from '../handlers/webSocket.js';
 
 const fetchPRPoints = async (participantId: string): Promise<number> => {
+    const backendUrl = process.env.GH_BACKEND_URL ?? 'http://localhost:4000';
     const response = await fetch(
-        `${process.env.GH_BACKEND_URL}/api/v1/participant/${encodeURIComponent(participantId)}/pr-points`
+        `${backendUrl}/api/v1/participant/${encodeURIComponent(participantId)}/pr-points`
     );
 
     if (!response.ok) {
-        throw new Error(`PR points request failed with status ${response.status}`);
+        throw new Error(`PR points request failed with status ${response.status} for ${backendUrl}`);
     }
 
     const body = await response.json() as { data?: number };
@@ -22,16 +23,18 @@ const PR_POINTS_CACHE_TTL = 10_000;
 export default async function wsRoutes(app: FastifyInstance) {
     app.get('/', { websocket: true }, async (socket, req: FastifyRequest) => {
         let userId = 'anonymous';
-
-        const token = req.cookies?.jwt;
+        app.log.info({ url: req.url }, 'WebSocket route reached');
+        const query = req.query as { token?: unknown };
+        const queryToken = typeof query.token === 'string' ? query.token : undefined;
+        const token = req.cookies?.jwt ?? queryToken;
         if(!token){
             return socket.close(1008, 'Missing JWT token');
         }
 
         if (token) {
             try {
-                
-                const payload = jwt.verify(token, process.env.JWT as string) as jwt.JwtPayload;
+                const secret = process.env.JWT_SECRET ?? process.env.JWT ?? 'monster';
+                const payload = jwt.verify(token, secret) as jwt.JwtPayload;
                 //console.log('WebSocket connection authenticated for user:', payload.id);
                 if (typeof payload.id === 'string') userId = payload.id;
             } catch {
