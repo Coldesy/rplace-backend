@@ -3,8 +3,36 @@ import { FastifyInstance, FastifyRequest } from 'fastify';
 import jwt from 'jsonwebtoken';
 import { activeClients } from '../utilities/broadcast.js';
 import { handleMessage } from '../handlers/webSocket.js';
+import { extractUserIdentity, type JwtUserPayload } from './board.js';
 
 const PR_POINTS_CACHE_TTL = 10_000;
+
+export interface PRPointsResponse {
+    status?: string;
+    message?: string;
+    data?: {
+        points?: number;
+    } | number;
+}
+
+export const parsePRPointsResponse = (payload: unknown): number => {
+    if (!payload || typeof payload !== 'object') {
+        return 0;
+    }
+    const body = payload as PRPointsResponse;
+    if (typeof body.data === 'number' && Number.isFinite(body.data)) {
+        return body.data;
+    }
+    if (
+        body.data &&
+        typeof body.data === 'object' &&
+        typeof body.data.points === 'number' &&
+        Number.isFinite(body.data.points)
+    ) {
+        return body.data.points;
+    }
+    return 0;
+};
 
 const fetchPRPoints = async (participantId: string): Promise<number> => {
     const response = await fetch(
@@ -15,12 +43,19 @@ const fetchPRPoints = async (participantId: string): Promise<number> => {
         throw new Error(`PR points request failed with status ${response.status}`);
     }
 
-    const body = await response.json() as { data?: number };
-    return body.data ?? 0;
+    const body = await response.json();
+    return parsePRPointsResponse(body);
 };
 
 export default async function wsRoutes(app: FastifyInstance) {
     app.get('/', { websocket: true }, async (socket, req: FastifyRequest) => {
+        app.log.info(
+            {
+                url: req.raw.url,
+                query: req.query,
+            },
+            'WebSocket connection initiated',
+        );
         let userId = 'anonymous';
 
         // Parse the query directly so this works even when req.query is unavailable.
@@ -51,15 +86,16 @@ export default async function wsRoutes(app: FastifyInstance) {
                 throw new Error('JWT_SECRET or JWT is not configured');
             }
 
-            const payload = jwt.verify(token, secret) as jwt.JwtPayload;
+            const payload = jwt.verify(token, secret) as JwtUserPayload;
 
-            if (typeof payload.id !== 'string') {
-                app.log.warn('Closing WebSocket: JWT does not contain a valid id');
+            const identity = extractUserIdentity(payload);
+            if (!identity) {
+                app.log.warn('Closing WebSocket: JWT does not contain a valid identity');
                 socket.close(1008, 'Invalid JWT payload');
                 return;
             }
 
-            userId = payload.id;
+            userId = identity;
 
             app.log.info({ userId }, 'WebSocket authenticated');
         } catch (error) {
